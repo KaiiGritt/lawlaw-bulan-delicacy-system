@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useSession, signOut } from 'next-auth/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,7 +22,18 @@ import {
 } from 'lucide-react';
 
 export default function Header() {
-  const { data: session } = useSession();
+  interface SessionUser {
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+    role?: string | null;
+  }
+
+  interface SessionData {
+    user?: SessionUser;
+  }
+
+  const session = null; // Mock session for static frontend
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -113,20 +123,18 @@ export default function Header() {
                   >
                     {/* User Info */}
                     <div className="px-4 pb-3 border-b">
-                      <p className="font-medium text-gray-900">{session.user?.name}</p>
-                      <p className="text-xs text-gray-500">{session.user?.email}</p>
+                      <p className="font-medium text-gray-900">Demo User</p>
+                      <p className="text-xs text-gray-500">demo@example.com</p>
                     </div>
 
                     {/* Links */}
                     <div className="flex flex-col py-2">
-                      {session.user?.role === 'admin' && (
-                        <Link
-                          href="/admin"
-                          className="px-4 py-2 hover:bg-gray-100 text-gray-700 text-sm"
-                        >
-                          Admin Dashboard
-                        </Link>
-                      )}
+                      <Link
+                        href="/admin"
+                        className="px-4 py-2 hover:bg-gray-100 text-gray-700 text-sm"
+                      >
+                        Admin Dashboard
+                      </Link>
 
                       <Link href="/profile" className="px-4 py-2 hover:bg-gray-100 text-sm text-gray-700">
                         My Account
@@ -137,7 +145,6 @@ export default function Header() {
                       </Link>
 
                       <button
-                        onClick={() => signOut()}
                         className="text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
                       >
                         Logout
@@ -180,25 +187,9 @@ export default function Header() {
               <Link href="/recipes" onClick={toggleMobileMenu}>Recipes</Link>
               <Link href="/cart" onClick={toggleMobileMenu}>Cart</Link>
 
-              {session ? (
-                <>
-                  {session.user?.role === 'admin' && (
-                    <Link href="/admin" onClick={toggleMobileMenu}>Admin Dashboard</Link>
-                  )}
-                  <Link href="/profile" onClick={toggleMobileMenu}>My Account</Link>
-
-                  <button
-                    onClick={() => signOut()}
-                    className="text-left text-red-600 font-medium mt-2"
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <Link href="/login" onClick={toggleMobileMenu} className="font-medium text-primary-green">
-                  Login
-                </Link>
-              )}
+              <Link href="/login" onClick={toggleMobileMenu} className="font-medium text-primary-green">
+                Login
+              </Link>
             </nav>
           </motion.div>
         )}

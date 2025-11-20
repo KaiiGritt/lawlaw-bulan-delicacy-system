@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {motion} from'framer-motion'
@@ -37,18 +36,25 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
   const router = useRouter();
 
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>({
+    id: 'demo-user-id',
+    email: 'user@example.com',
+    name: 'Demo User',
+    role: 'user',
+    profilePicture: null,
+    createdAt: new Date().toISOString(),
+    sellerApplication: undefined
+  });
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    name: 'Demo User',
+    email: 'user@example.com',
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
@@ -66,39 +72,9 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    if (status === 'loading') return;
-    if (!session) {
-      router.push('/login');
-      return;
-    }
-    fetchProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, status]);
-
-  useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
     localStorage.setItem('prefers-dark', dark ? 'true' : 'false');
   }, [dark]);
-
-  const fetchProfile = async () => {
-    try {
-      const res = await fetch('/api/user/profile');
-      if (!res.ok) throw new Error('Failed to fetch');
-      const data = await res.json();
-      setProfile(data);
-      setFormData({
-        name: data.name || '',
-        email: data.email,
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      });
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -114,28 +90,12 @@ export default function ProfilePage() {
     setError('');
     setSuccess('');
 
-    const payload = new FormData();
-    payload.append('profilePicture', file);
-
-    try {
-      const res = await fetch('/api/user/profile', {
-        method: 'POST',
-        body: payload
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Upload failed' }));
-        setError(err.error || 'Failed to upload');
-      } else {
-        const updated = await res.json();
-        setProfile(updated);
-        setSuccess('Profile picture updated.');
-      }
-    } catch (err) {
-      setError('An error occurred while uploading.');
-    } finally {
+    // Simulate upload delay
+    setTimeout(() => {
+      setProfile(prev => prev ? { ...prev, profilePicture: URL.createObjectURL(file) } : null);
+      setSuccess('Profile picture updated.');
       setUploading(false);
-    }
+    }, 1000);
   };
 
   const validateForm = () => {
@@ -163,36 +123,17 @@ export default function ProfilePage() {
     if (!validateForm()) return;
 
     setSaving(true);
-    try {
-      const res = await fetch('/api/user/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          currentPassword: formData.currentPassword || undefined,
-          newPassword: formData.newPassword || undefined
-        })
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Update failed' }));
-        setError(err.error || 'Failed to update profile.');
-      } else {
-        const updated = await res.json();
-        setProfile(updated);
-        setSuccess('Profile updated successfully.');
-        setIsEditing(false);
-        setFormData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
-      }
-    } catch (err) {
-      setError('An unexpected error occurred.');
-    } finally {
+    // Simulate save delay
+    setTimeout(() => {
+      setProfile(prev => prev ? { ...prev, name: formData.name, email: formData.email } : null);
+      setSuccess('Profile updated successfully.');
+      setIsEditing(false);
+      setFormData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
       setSaving(false);
-    }
+    }, 1000);
   };
 
-  if (status === 'loading' || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cream-50 to-green-50 dark:from-gray-800 dark:to-gray-900">
         <div className="space-y-4 text-center">
@@ -203,7 +144,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (!session || !profile) return null;
+  if (!profile) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cream-50 to-green-50 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
